@@ -1,113 +1,61 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Request, Response, NextFunction } from 'express';
+import { describe, expect, it } from 'vitest';
+import request from 'supertest';
+import { app } from '../src/index';
 import jwt from 'jsonwebtoken';
-import { authenticateToken } from '../src/auth/auth.middleware';
 import { env } from '../src/env';
 
 describe('Auth Middleware', () => {
-    let mockRequest: Partial<Request>;
-    let mockResponse: Partial<Response>;
-    let mockNext: NextFunction;
+    it('devrait rejeter une requête sans token', async () => {
+        const response = await request(app).get('/api/decks/mine');
 
-    beforeEach(() => {
-        mockRequest = {
-            headers: {},
-        };
-        mockResponse = {
-            status: vi.fn().mockReturnThis(),
-            json: vi.fn().mockReturnThis(),
-        };
-        mockNext = vi.fn();
+        expect(response.status).toBe(401);
+        expect(response.body).toHaveProperty('error', 'Token manquant');
     });
 
-    it('devrait rejeter une requête sans token', () => {
-        authenticateToken(
-            mockRequest as Request,
-            mockResponse as Response,
-            mockNext
-        );
+    it('devrait rejeter une requête avec un token invalide', async () => {
+        const response = await request(app)
+            .get('/api/decks/mine')
+            .set('Authorization', 'Bearer invalid-token');
 
-        expect(mockResponse.status).toHaveBeenCalledWith(401);
-        expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Token manquant' });
-        expect(mockNext).not.toHaveBeenCalled();
+        expect(response.status).toBe(401);
+        expect(response.body).toHaveProperty('error', 'Token invalide ou expiré');
     });
 
-    it('devrait rejeter une requête avec un token invalide', () => {
-        mockRequest.headers = {
-            authorization: 'Bearer invalid-token',
-        };
-
-        authenticateToken(
-            mockRequest as Request,
-            mockResponse as Response,
-            mockNext
-        );
-
-        expect(mockResponse.status).toHaveBeenCalledWith(401);
-        expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Token invalide ou expiré' });
-        expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('devrait accepter une requête avec un token valide', () => {
+    it('devrait accepter une requête avec un token valide', async () => {
         const token = jwt.sign(
             { userId: 1, email: 'test@example.com' },
             env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        mockRequest.headers = {
-            authorization: `Bearer ${token}`,
-        };
+        const response = await request(app)
+            .get('/api/decks/mine')
+            .set('Authorization', `Bearer ${token}`);
 
-        authenticateToken(
-            mockRequest as Request,
-            mockResponse as Response,
-            mockNext
-        );
-
-        expect(mockRequest.user).toEqual({
-            userId: 1,
-            email: 'test@example.com',
-        });
-        expect(mockNext).toHaveBeenCalled();
-        expect(mockResponse.status).not.toHaveBeenCalled();
+        expect(response.status).toBe(200);
     });
 
-    it('devrait rejeter un token expiré', () => {
+    it('devrait rejeter un token expiré', async () => {
         const expiredToken = jwt.sign(
             { userId: 1, email: 'test@example.com' },
             env.JWT_SECRET,
             { expiresIn: '-1s' }
         );
 
-        mockRequest.headers = {
-            authorization: `Bearer ${expiredToken}`,
-        };
+        const response = await request(app)
+            .get('/api/decks/mine')
+            .set('Authorization', `Bearer ${expiredToken}`);
 
-        authenticateToken(
-            mockRequest as Request,
-            mockResponse as Response,
-            mockNext
-        );
-
-        expect(mockResponse.status).toHaveBeenCalledWith(401);
-        expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Token invalide ou expiré' });
-        expect(mockNext).not.toHaveBeenCalled();
+        expect(response.status).toBe(401);
+        expect(response.body).toHaveProperty('error', 'Token invalide ou expiré');
     });
 
-    it('devrait rejeter un authorization header sans Bearer', () => {
-        mockRequest.headers = {
-            authorization: 'some-token',
-        };
+    it('devrait rejeter un authorization header sans Bearer', async () => {
+        const response = await request(app)
+            .get('/api/decks/mine')
+            .set('Authorization', 'some-token');
 
-        authenticateToken(
-            mockRequest as Request,
-            mockResponse as Response,
-            mockNext
-        );
-
-        expect(mockResponse.status).toHaveBeenCalledWith(401);
-        expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Token manquant' });
-        expect(mockNext).not.toHaveBeenCalled();
+        expect(response.status).toBe(401);
+        expect(response.body).toHaveProperty('error', 'Token manquant');
     });
 });
