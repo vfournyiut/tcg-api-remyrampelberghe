@@ -1,0 +1,177 @@
+openapi: 3.0.0
+info:
+  title: TCG API
+  description: API pour gérer une collection de cartes Pokémon et des decks
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@tcg-api.com
+
+servers:
+  - url: http://localhost:3000/api
+    description: Serveur de développement
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Utilisez le token JWT obtenu via /auth/sign-in ou /auth/sign-up
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: "pikachu_trainer"
+        email:
+          type: string
+          format: email
+          example: "trainer@pokemon.com"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - email
+
+    Card:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Pikachu"
+        hp:
+          type: integer
+          example: 60
+        attack:
+          type: integer
+          example: 55
+        type:
+          type: string
+          enum: [Normal, Fire, Water, Electric, Grass, Ice, Fighting, Poison, Ground, Flying, Psychic, Bug, Rock, Ghost, Dragon, Dark, Steel, Fairy]
+          example: "Electric"
+        pokedexNumber:
+          type: integer
+          example: 25
+        imgUrl:
+          type: string
+          nullable: true
+          example: "https://assets.pokemon.com/assets/cms2/img/pokedex/full/025.png"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - hp
+        - attack
+        - type
+        - pokedexNumber
+
+    DeckCard:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        deckId:
+          type: integer
+          example: 1
+        cardId:
+          type: integer
+          example: 25
+        card:
+          $ref: '#/components/schemas/Card'
+
+    Deck:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Mon Deck Électrique"
+        userId:
+          type: integer
+          example: 1
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeckCard'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - userId
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Message d'erreur"
+      required:
+        - error
+
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Opération réussie"
+      required:
+        - message
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            username:
+              type: string
+              example: "pikachu_trainer"
+            email:
+              type: string
+              example: "trainer@pokemon.com"
+      required:
+        - token
+        - user
+
+tags:
+  - name: Auth
+    description: Authentification et gestion des utilisateurs
+  - name: Cards
+    description: Gestion des cartes Pokémon
+  - name: Decks
+    description: Gestion des decks (collection de cartes)
+
+paths: {}
