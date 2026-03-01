@@ -1,6 +1,7 @@
 {
   "name": "template-tcg-api",
   "version": "1.0.0",
+  "type": "module",
   "author": "",
   "description": "TCG Pokemon-like Backend Server",
   "main": "dist/index.js",
@@ -40,8 +41,8 @@
     "socket.io": "4.6.1",
     "swagger-ui-express": "5.0.1",
     "uuid": "^9.0.1"
-},
-"devDependencies": {
+  },
+  "devDependencies": {
     "@commitlint/cli": "^20.4.1",
     "@commitlint/config-conventional": "^20.4.1",
     "@types/bcryptjs": "2.4.6",
@@ -58,11 +59,12 @@
     "@vitest/ui": "4.0.15",
     "husky": "^9.1.7",
     "prettier": "^3.8.1",
+    "socket.io-client": "^4.8.3",
     "supertest": "^7.2.2",
     "tsx": "4.7.0",
     "typescript": "5.4.5",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "^4.0.15",
     "vitest-mock-extended": "3.1.0"
-}
+  }
 }

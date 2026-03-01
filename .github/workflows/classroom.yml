@@ -13,6 +13,21 @@ jobs:
   test-and-build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,11 +48,24 @@ jobs:
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
 
+      - name: Run Prisma Migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+
+      - name: Seed Database
+        run: npm run db:seed
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+
       - name: Run TypeScript type check
         run: npm run ts:check
 
       - name: Build project
         run: npm run build
 
-      - name: Build project
+      - name: Run tests
         run: npm run test
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+          JWT_SECRET: test-secret-key-for-ci
