@@ -10,6 +10,12 @@ import { cardsRouter } from './routes/cards.routes';
 import { decksRouter } from './routes/decks.routes';
 import { loadSwaggerDocs } from './swagger';
 import { socketAuthMiddleware } from './auth/socket.auth.middleware';
+import { 
+    handleCreateRoom, 
+    handleGetRooms, 
+    handleJoinRoom, 
+    handleDisconnect 
+} from './game/game.handlers';
 
 // Get __filename equivalent in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -77,9 +83,15 @@ if (isMainModule) {
             email: socket.email,
         });
 
+        // Matchmaking handlers
+        socket.on('createRoom', (data) => handleCreateRoom(io, socket, data));
+        socket.on('getRooms', () => handleGetRooms(socket));
+        socket.on('joinRoom', (data) => handleJoinRoom(io, socket, data));
+
         // Handle disconnection
         socket.on('disconnect', () => {
             console.log(`❌ User disconnected: ${socket.email} (ID: ${socket.userId})`);
+            handleDisconnect(io, socket);
         });
     });
 

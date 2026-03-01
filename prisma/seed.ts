@@ -1,9 +1,14 @@
 import bcrypt from "bcryptjs";
 import {readFileSync} from "fs";
-import {join} from "path";
+import {join, dirname} from "path";
+import {fileURLToPath} from "url";
 import {prisma} from "../src/database";
 import {CardModel} from "../src/generated/prisma/models/Card";
 import {PokemonType} from "../src/generated/prisma/enums";
+
+// Get __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function main() {
     console.log("🌱 Starting database seed...");
