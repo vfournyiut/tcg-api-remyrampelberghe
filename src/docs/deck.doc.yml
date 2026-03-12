@@ -1,0 +1,288 @@
+paths:
+  /decks:
+    post:
+      tags:
+        - Decks
+      summary: Créer un nouveau deck
+      description: Crée un nouveau deck avec un nom et exactement 10 cartes uniques. Requiert une authentification JWT.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - cards
+              properties:
+                name:
+                  type: string
+                  example: "Mon Deck Électrique"
+                  description: Nom du deck
+                cards:
+                  type: array
+                  items:
+                    type: integer
+                  minItems: 10
+                  maxItems: 10
+                  example: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                  description: Tableau de 10 IDs de cartes uniques
+      responses:
+        201:
+          description: Deck créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deck'
+        400:
+          description: Données invalides (nom manquant, pas exactement 10 cartes, cartes non uniques ou invalides)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingName:
+                  summary: Nom manquant
+                  value:
+                    error: "Nom manquant"
+                invalidCards:
+                  summary: Nombre de cartes invalide
+                  value:
+                    error: "Le deck doit contenir exactement 10 cartes"
+                duplicateCards:
+                  summary: Cartes dupliquées
+                  value:
+                    error: "Les cartes doivent être uniques"
+                invalidCardIds:
+                  summary: IDs de cartes invalides
+                  value:
+                    error: "Certaines cartes sont invalides"
+        401:
+          description: Token manquant ou invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Token manquant"
+        500:
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /decks/mine:
+    get:
+      tags:
+        - Decks
+      summary: Récupérer mes decks
+      description: Retourne tous les decks de l'utilisateur authentifié, triés par date de création décroissante (plus récents en premier).
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Liste des decks récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Deck'
+        401:
+          description: Token manquant ou invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Token manquant"
+        500:
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /decks/{id}:
+    get:
+      tags:
+        - Decks
+      summary: Récupérer un deck par son ID
+      description: Retourne les détails d'un deck spécifique appartenant à l'utilisateur authentifié.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID du deck à récupérer
+          example: 1
+      responses:
+        200:
+          description: Deck récupéré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deck'
+        401:
+          description: Token manquant ou invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Token manquant"
+        404:
+          description: Deck introuvable ou n'appartient pas à l'utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Deck introuvable"
+        500:
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Decks
+      summary: Modifier un deck
+      description: Met à jour le nom et/ou les cartes d'un deck existant. Au moins un champ (name ou cards) doit être fourni.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID du deck à modifier
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Mon Deck Électrique Amélioré"
+                  description: Nouveau nom du deck (optionnel)
+                cards:
+                  type: array
+                  items:
+                    type: integer
+                  minItems: 10
+                  maxItems: 10
+                  example: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+                  description: Nouveau tableau de 10 IDs de cartes uniques (optionnel)
+              minProperties: 1
+      responses:
+        200:
+          description: Deck modifié avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deck'
+        400:
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                noData:
+                  summary: Aucune donnée à modifier
+                  value:
+                    error: "Aucune donnée à modifier"
+                invalidCards:
+                  summary: Nombre de cartes invalide
+                  value:
+                    error: "Le deck doit contenir exactement 10 cartes"
+                duplicateCards:
+                  summary: Cartes dupliquées
+                  value:
+                    error: "Les cartes doivent être uniques"
+                invalidCardIds:
+                  summary: IDs de cartes invalides
+                  value:
+                    error: "Certaines cartes sont invalides"
+        401:
+          description: Token manquant ou invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Token manquant"
+        404:
+          description: Deck introuvable ou n'appartient pas à l'utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Deck introuvable"
+        500:
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Decks
+      summary: Supprimer un deck
+      description: Supprime définitivement un deck appartenant à l'utilisateur authentifié.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID du deck à supprimer
+          example: 1
+      responses:
+        200:
+          description: Deck supprimé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+              example:
+                message: "Deck supprimé"
+        401:
+          description: Token manquant ou invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Token manquant"
+        404:
+          description: Deck introuvable ou n'appartient pas à l'utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Deck introuvable"
+        500:
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
